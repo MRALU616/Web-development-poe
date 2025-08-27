@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nasty Juice Product Page</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="min-h-screen bg-gray-50 p-6">
+    <div class="max-w-6xl mx-auto grid md:grid-cols-2 gap-8">
+      <!-- Product Image -->
+      <div class="flex items-center justify-center">
+        <img
+          src="https://nastyworldwide.com/cdn/shop/products/nastyjuice-mango.png?v=1669970000"
+          alt="Nasty Juice 60ml"
+          class="rounded-2xl shadow-lg w-96"
+        />
+      </div>
+
+      <!-- Product Details -->
+      <div>
+        <h1 class="text-3xl font-bold mb-4">Nasty Juice 60ml</h1>
+        <p class="text-gray-600 mb-4">
+          Smooth, bold flavors crafted by Nasty Juice. Premium quality e-liquid
+          with strong, long-lasting taste.
+        </p>
+        <p class="text-2xl font-semibold mb-6">$14.99</p>
+
+        <!-- Flavor Selector -->
+        <div class="mb-4">
+          <label class="block text-sm font-medium mb-2">Flavor</label>
+          <select class="w-full border rounded-lg p-2">
+            <option>Mango Kush</option>
+            <option>Trap Queen</option>
+            <option>Slow Blow</option>
+            <option>Fat Boy</option>
+          </select>
+        </div>
+
+        <!-- Quantity Selector -->
+        <div class="mb-6">
+          <label class="block text-sm font-medium mb-2">Quantity</label>
+          <div class="flex items-center gap-2">
+            <button
+              class="px-4 py-2 border rounded-lg"
+              onclick="changeQuantity(-1)"
+            >
+              -
+            </button>
+            <span
+              id="quantity"
+              class="px-4 py-2 border rounded-lg"
+              >1</span
+            >
+            <button
+              class="px-4 py-2 border rounded-lg"
+              onclick="changeQuantity(1)"
+            >
+              +
+            </button>
+          </div>
+        </div>
+
+        <!-- Add to Cart -->
+        <button
+          class="w-full flex items-center justify-center gap-2 bg-black text-white text-lg py-4 rounded-2xl"
+        >
+          🛒 Add to Cart
+        </button>
+      </div>
+    </div>
+
+    <!-- Related Products -->
+    <div class="max-w-6xl mx-auto mt-16">
+      <h2 class="text-2xl font-bold mb-6">You may also like</h2>
+      <div class="grid md:grid-cols-3 gap-6">
+        <!-- Related Item -->
+        <div class="rounded-2xl shadow-md border p-4 text-center">
+          <img
+            src="20k.jpeg"
+            alt="Mango Kush"
+            class="w-40 mx-auto mb-4"
+          />
+          <h3 class="font-semibold mb-2">Mango Kush</h3>
+          <p class="text-gray-600 mb-2">$14.99</p>
+          <button class="px-4 py-2 border rounded-xl">View</button>
+        </div>
+        <div class="rounded-2xl shadow-md border p-4 text-center">
+          <img
+            src="18 k device.jpeg"
+            alt="Trap Queen"
+            class="w-40 mx-auto mb-4"
+          />
+          <h3 class="font-semibold mb-2">Trap Queen</h3>
+          <p class="text-gray-600 mb-2">$14.99</p>
+          <button class="px-4 py-2 border rounded-xl">View</button>
+        </div>
+        <div class="rounded-2xl shadow-md border p-4 text-center">
+          <img
+            src="OIP (1).webp"
+            alt="Slow Blow"
+            class="w-40 mx-auto mb-4"
+          />
+          <h3 class="font-semibold mb-2">Slow Blow</h3>
+          <p class="text-gray-600 mb-2">$14.99</p>
+          <button class="px-4 py-2 border rounded-xl">View</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Simple JS for Quantity -->
+    <script>
+      function changeQuantity(amount) {
+        const qtyEl = document.getElementById("quantity");
+        let qty = parseInt(qtyEl.innerText);
+        qty = Math.max(1, qty + amount);
+        qtyEl.innerText = qty;
+      }
+    </script>
+  </body>
+</html>
