@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Enquiry — Example Organisation</title>
+  <style>
+    body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial; padding: 24px; max-width:800px; margin:auto; }
+    label { display:block; margin-top:12px; font-weight:600; }
+    input, select, textarea { width:100%; padding:8px; margin-top:6px; box-sizing:border-box; border:1px solid #ccc; border-radius:6px; }
+    .row { display:flex; gap:12px; }
+    .row > * { flex:1; }
+    .error { color:#a00; font-size:0.9rem; margin-top:6px; }
+    .success { background:#e6ffed; border:1px solid #b7f0c7; padding:12px; border-radius:8px; margin-top:12px; }
+    button { margin-top:14px; padding:10px 14px; border-radius:8px; border:0; cursor:pointer; background:#2563eb; color:#fff; }
+  </style>
+</head>
+<body>
+  <h1>Enquiry Form</h1>
+  <p>Use this form to enquire about services, volunteering or sponsorship. After validation you'll get a suggested response about availability/cost (demo).</p>
+
+  <form id="enquiryForm" method="post" action="/api/enquiry">
+    <label for="name">Full name *</label>
+    <input id="name" name="name" required minlength="2" placeholder="Your name" />
+
+    <label for="email">Email *</label>
+    <input id="email" name="email" type="email" required placeholder="you@example.org" />
+
+    <label for="phone">Phone (optional)</label>
+    <input id="phone" name="phone" type="tel" pattern="^\+?[0-9\s\-]{7,20}$" placeholder="+27 12 345 6789" />
+
+    <label for="service">Service you're enquiring about *</label>
+    <select id="service" name="service" required>
+      <option value="">-- choose a service --</option>
+      <option>Community Workshop</option>
+      <option>School Outreach</option>
+      <option>Event Sponsorship</option>
+      <option>Donation / Fundraising</option>
+      <option>Other</option>
+    </select>
+
+    <fieldset style="margin-top:12px; border:0; padding:0;">
+      <legend style="font-weight:600;">Interest type *</legend>
+      <label><input type="radio" name="interest" value="enquire" checked /> General enquiry</label>
+      <label><input type="radio" name="interest" value="volunteer" /> Volunteer</label>
+      <label><input type="radio" name="interest" value="sponsor" /> Sponsor</label>
+    </fieldset>
+
+    <label for="date">Preferred date (optional)</label>
+    <input id="date" name="date" type="date" />
+
+    <label for="budget">Budget estimate (optional)</label>
+    <input id="budget" name="budget" type="number" min="0" step="1" placeholder="Enter approximate budget in your currency" />
+
+    <label for="message">Tell us more (max 1000 chars) *</label>
+    <textarea id="message" name="message" maxlength="1000" rows="6" required placeholder="Describe what you need..."></textarea>
+
+    <div id="formErrors" class="error" aria-live="polite" style="display:none"></div>
+
+    <button type="submit">Send enquiry</button>
+  </form>
+
+  <div id="responseBox" style="display:none"></div>
+
+<script>
+(function(){
+  const form = document.getElementById('enquiryForm');
+  const errorsEl = document.getElementById('formErrors');
+  const responseBox = document.getElementById('responseBox');
+
+  function showErrors(list) {
+    errorsEl.style.display = 'block';
+    errorsEl.innerHTML = list.map(e => '<div>• ' + e + '</div>').join('');
+  }
+  function clearErrors() {
+    errorsEl.style.display = 'none';
+    errorsEl.innerHTML = '';
+  }
+
+  // Client-side validation beyond browser checks
+  function validateFormData(fd) {
+    const errs = [];
+
+    if (!fd.get('name') || fd.get('name').trim().length < 2) errs.push('Please enter your full name (at least 2 characters).');
+    const email = fd.get('email') || '';
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errs.push('Enter a valid email address.');
+    const service = fd.get('service');
+    if (!service) errs.push('Please select a service.');
+    const message = fd.get('message') || '';
+    if (message.trim().length < 10) errs.push('Please provide more details (at least 10 characters).');
+    const budget = fd.get('budget');
+    if (budget && Number(budget) < 0) errs.push('Budget must be a positive number.');
+
+    return errs;
+  }
+
+  // Lightweight availability/cost suggestion logic (demo)
+  function suggestResponse(data) {
+    // data: object {service, interest, budget, date}
+    const budget = data.budget ? Number(data.budget) : null;
+    const s = data.service.toLowerCase();
+    let availability = 'We will need to check availability.';
+    let costNote = 'We will provide a formal quote after reviewing details.';
+
+    if (s.includes('workshop')) {
+      if (budget && budget >= 800) { availability = 'Likely available within your budget.'; costNote = 'Estimated base cost: ~800 (demo).'; }
+      else if (budget && budget > 0) { availability = 'Might be possible but requires a higher budget.'; costNote = 'Estimate: likely >800; we will confirm.'; }
+      else { availability = 'Availability depends on date and size of group.'; }
+    } else if (s.includes('sponsor') || s.includes('sponsorship')) {
+      availability = 'Sponsorship opportunities exist — specifics depend on package.';
+      if (budget) costNote = 'Suggested sponsorship package range: ' + (budget >= 2000 ? 'Premium' : 'Standard / Custom');
+    } else if (s.includes('school') || s.includes('outreach')) {
+      availability = 'Outreach slots are scheduled quarterly; we will check the next open slot.';
+      if (budget && budget >= 500) costNote = 'This budget may cover basic outreach expenses.';
+    } else {
+      availability = 'Thank you — we will clarify details and reply with options.';
+    }
+
+    return {
+      availability,
+      costNote,
+      followUp: 'A team member will contact you at ' + (data.email || '[no email provided]') + '.'
+    };
+  }
+
+  form.addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    clearErrors();
+    responseBox.style.display = 'none';
+    const fd = new FormData(form);
+
+    const errs = validateFormData(fd);
+    if (errs.length) { showErrors(errs); return; }
+
+    // Build a plain object to send / use
+    const payload = {};
+    for (const [k,v] of fd.entries()) payload[k] = v;
+
+    // Suggestion to present to user (client-side)
+    const suggestion = suggestResponse(payload);
+    responseBox.innerHTML = `
+      <div class="success">
+        <strong>Suggested response (demo)</strong>
+        <p><strong>Availability:</strong> ${suggestion.availability}</p>
+        <p><strong>Cost note:</strong> ${suggestion.costNote}</p>
+        <p>${suggestion.followUp}</p>
+      </div>
+    `;
+    responseBox.style.display = 'block';
+
+    // Try AJAX submission (asynchronous) to the server-side endpoint specified in `action`
+    fetch(form.action, {
+      method: 'POST',
+      headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+    .then(r => {
+      if (!r.ok) throw new Error('Server returned ' + r.status);
+      return r.json();
+    })
+    .then(data => {
+      // server should respond with JSON like { ok:true, message: "Received" }
+      const note = document.createElement('div');
+      note.style.marginTop = '12px';
+      note.style.padding = '10px';
+      note.style.border = '1px solid #ddd';
+      note.style.borderRadius = '8px';
+      note.textContent = data.message || 'Enquiry submitted successfully (server).';
+      responseBox.appendChild(note);
+      form.reset();
+    })
+    .catch(err => {
+      // graceful error handling: show user friendly notice — allow retry
+      const fail = document.createElement('div');
+      fail.style.marginTop = '12px';
+      fail.style.color = '#a00';
+      fail.textContent = 'Could not submit to server (this demo). You can copy your details and send by email or try again later.';
+      responseBox.appendChild(fail);
+      console.warn('Enquiry submit failed:', err);
+    });
+
+  });
+})();
+</script>
+</body>
+</html>
